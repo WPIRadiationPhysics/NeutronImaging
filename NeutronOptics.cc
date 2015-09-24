@@ -20,8 +20,6 @@
 #include "G4UIExecutive.hh"
 #endif
 
-#include "Analysis.hh"
-
 namespace {
   void PrintUsage() {
     G4cerr << " Usage: " << G4endl;

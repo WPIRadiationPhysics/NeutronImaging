@@ -1,5 +1,5 @@
 #include "PrimaryGeneratorAction.hh"
-#include "Analysis.hh"
+#include "Messenger.hh"
 
 #include "G4RunManager.hh"
 #include "G4LogicalVolumeStore.hh"
@@ -10,6 +10,7 @@
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4UImanager.hh"
 
 #include "Randomize.hh"
 #include <math.h>
@@ -31,38 +32,20 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction() { delete fParticleGun; }
 
+// This function is called at the begining of event
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 
-  // This function is called at the begining of event
-  // In order to avoid dependence of PrimaryGeneratorAction
-  // on DetectorConstruction class we get world volume
-  // from G4LogicalVolumeStore
-  G4double worldZHalfLength = 0;
-  G4LogicalVolume* worldLV
-    = G4LogicalVolumeStore::GetInstance()->GetVolume("World");
-  G4Tubs* worldTubs = 0;
-  
-  if ( worldLV) worldTubs = dynamic_cast< G4Tubs*>(worldLV->GetSolid()); 
-  if ( worldTubs ) { worldZHalfLength = worldTubs->GetZHalfLength(); }
-  else  {
-    G4ExceptionDescription msg;
-    msg << "World volume of box not found." << G4endl;
-    msg << "Perhaps you have changed geometry." << G4endl;
-    msg << "The gun will be place in the center.";
-    G4Exception("PrimaryGeneratorAction::GeneratePrimaries()",
-      "MyCode0002", JustWarning, msg);
-  }
-
-  // Acquire beam diameter
+  // Gaussian profile of given FWHM via radial StDev; Azimuthal symmetry assumed
   G4double beamFWHM = 1*mm;
-
-  // Acquire position within a Gaussian profile of given FWHM via radial StDev
-  // Azimuthal symmetry assumed
   G4double beamSigmaR = beamFWHM/(2*pow(2*log(2), 0.5));
   G4double beamX = G4RandGauss::shoot(0, beamSigmaR/pow(2, 0.5)),
            beamY = G4RandGauss::shoot(0, beamSigmaR/pow(2, 0.5));
 
-  // Set gun position in Cartesian coordinates
-  fParticleGun->SetParticlePosition(G4ThreeVector(beamX, beamY, -2*worldZHalfLength));
+  // Acquire model height via Messenger
+  Messenger* messenger = Messenger::GetMessenger();
+  G4double worldZLength = messenger->GetModelHeight();
+
+  // Apply position and fire
+  fParticleGun->SetParticlePosition(G4ThreeVector(beamX, beamY, -worldZLength));
   fParticleGun->GeneratePrimaryVertex(anEvent);
 }

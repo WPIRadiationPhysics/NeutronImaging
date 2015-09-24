@@ -1,6 +1,7 @@
 #include "DetectorConstruction.hh"
-#include "UImessenger.hh"
+#include "Messenger.hh"
 
+#include "UImessenger.hh"
 #include "G4Material.hh"
 #include "G4NistManager.hh"
 #include "G4Tubs.hh"
@@ -27,6 +28,12 @@ DetectorConstruction::DetectorConstruction()
    fDetector(0),
    fCheckOverlaps(true) {
 
+     // Instantiate UI messenger
+     fUImessenger = new UImessenger(this);
+
+     // Initialize model parameters
+     fLDratio = 1; // Length-Diameter ratio of collimator
+
      // Acquire material data
      DefineMaterials();
    }
@@ -37,6 +44,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
   // Define geometric volumes
   return DefineVolumes();
+}
+
+void DetectorConstruction::ModelLDConfiguration(G4int LD_i) {
+
+  // Append Parameters and Reconstruct geometry
+  fLDratio = LD_i;
+  G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 
 void DetectorConstruction::DefineMaterials() {
@@ -110,7 +124,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   // Gadolinium collimator (cylinder-bored cylinder)
   GdC_cyl_innerRadius = 0.5*mm;
   GdC_cyl_outerRadius = modelRadius;
-  GdC_cyl_height = 20*mm;
+  GdC_cyl_height = 2*GdC_cyl_innerRadius*fLDratio;
   GdC_cyl_startAngle = 0*deg;
   GdC_cyl_spanningAngle = 360*deg;
 
@@ -123,6 +137,10 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   world_height = modelHeight;
   world_startAngle = 0*deg;
   world_spanningAngle = 360*deg;
+
+  // Save model height for source definition via Messenger
+  Messenger* messenger = Messenger::GetMessenger();
+  messenger->SaveModelHeight(world_height);
 
   // Solid coordinates (linear)
   G4double GdA_cyl_posZ = (GdA_cyl_height-modelHeight)/2,

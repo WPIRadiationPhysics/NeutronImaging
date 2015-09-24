@@ -1,4 +1,3 @@
-#include "Analysis.hh"
 #include "RunAction.hh"
 #include "PrimaryGeneratorAction.hh"
 #include "DetectorConstruction.hh"

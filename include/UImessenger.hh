@@ -20,6 +20,10 @@ class UImessenger: public G4UImessenger {
 
     // Obtain Detector Construction instance
     DetectorConstruction*    fDetectorConstruction;
+
+    // Create cmdDir and cmd objects
+    G4UIdirectory* fModelDirectory;
+    G4UIcmdWithADouble* fLDCmd;
 };
 
 #endif
