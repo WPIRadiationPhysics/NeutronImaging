@@ -1,10 +1,6 @@
 #include "PrimaryGeneratorAction.hh"
 #include "Messenger.hh"
 
-#include "G4RunManager.hh"
-#include "G4LogicalVolumeStore.hh"
-#include "G4LogicalVolume.hh"
-#include "G4Tubs.hh"
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
@@ -13,7 +9,7 @@
 #include "G4UImanager.hh"
 
 #include "Randomize.hh"
-#include <math.h>
+//#include <math.h>
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
  : G4VUserPrimaryGeneratorAction(),

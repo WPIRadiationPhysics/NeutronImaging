@@ -1,9 +1,9 @@
 # $Id: GNUmakefile,v 1.2 2000-10-19 12:22:10 stanaka Exp $
-# --------------------------------------------------------------
-# GNUmakefile for Neutron Optics.  Shaun Marshall, 09/22/2015.
-# --------------------------------------------------------------
+# -----------------------------------------------------------
+# GNUmakefile for ThermalOptics.  Shaun Marshall, 09/24/2015.
+# -----------------------------------------------------------
 
-name := runNeutronOptics
+name := runThermalOptics
 G4TARGET := $(name)
 G4EXLIB := true
 

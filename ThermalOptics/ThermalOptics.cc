@@ -107,13 +107,7 @@ int main(int argc,char** argv) {
     // Model loop
     for ( G4int model_i = 0; model_i < 1; model_i++ ) {
 
-      // Assign geometric configuration
-      //detConstruction->ModelConfiguration(model_i);
-
       for ( G4int GdC_i = 0; GdC_i < 1; GdC_i++ ) {
-
-        // Assign thickness
-        //detConstruction->IterateKaptonThickness(KA_thickness[KA_i]);
 
         // Run experimental beam energies
         syscmdStream.str(""); syscmdStream << "/gun/energy " << energy_thermal << " eV";
@@ -127,9 +121,6 @@ int main(int argc,char** argv) {
 
     // mm track cuts
     UImanager->ApplyCommand("/run/setCut 0.001 mm");
-
-    // Assign thickness (S59)
-    //detConstruction->IterateKaptonThickness(59);
 
     // Initialize visualizer and gui macros
 #ifdef G4UI_USE

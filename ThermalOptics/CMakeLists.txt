@@ -37,15 +37,15 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
-add_executable(NeutronOptics NeutronOptics.cc ${sources} ${headers})
-target_link_libraries(NeutronOptics ${Geant4_LIBRARIES})
+add_executable(ThermalOptics ThermalOptics.cc ${sources} ${headers})
+target_link_libraries(ThermalOptics ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
-# build runNeutronOptics. This is so that we can run the executable directly because it
+# build runThermalOptics. This is so that we can run the executable directly because it
 # relies on these scripts being in the current working directory.
 #
-set(NeutronOptics_SCRIPTS
+set(ThermalOptics_SCRIPTS
   icons.mac
   gui.mac
   run.png
@@ -54,7 +54,7 @@ set(NeutronOptics_SCRIPTS
   vis.mac
   )
 
-foreach(_script ${NeutronOptics_SCRIPTS})
+foreach(_script ${ThermalOptics_SCRIPTS})
   configure_file(
     ${PROJECT_SOURCE_DIR}/scripts/${_script}
     ${PROJECT_BINARY_DIR}/${_script}
@@ -65,4 +65,4 @@ endforeach()
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
-install(TARGETS NeutronOptics DESTINATION bin)
+install(TARGETS ThermalOptics DESTINATION bin)

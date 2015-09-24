@@ -1,5 +1,3 @@
-# Source build
-build/
-
-# Custom recompile
-compile.sh
+# ThermalOptics
+# local source build
+ThermalOptics/build/

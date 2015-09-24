@@ -1,13 +1,12 @@
 #include "DetectorConstruction.hh"
+#include "UImessenger.hh"
 #include "Messenger.hh"
 
-#include "UImessenger.hh"
 #include "G4Material.hh"
 #include "G4NistManager.hh"
 #include "G4Tubs.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
-#include "G4PVReplica.hh"
 #include "G4GlobalMagFieldMessenger.hh"
 #include "G4AutoDelete.hh"
 #include "G4GeometryManager.hh"
@@ -68,7 +67,11 @@ void DetectorConstruction::DefineMaterials() {
   new G4Material("Vacuum", 1., 1.01*g/mole, density,
                    kStateGas,temperature,pressure);
 
-  // Manually constructing Kapton, did not seem to find from DB correctly...
+  // Manually synthesize material
+  /*
+
+  Todo: label arguments from G4Material.hh
+
   G4Material* Kapton = new G4Material("Kapton",1.42*g/cm3, 4);
   G4Element* elH = new G4Element("Hydrogen","H2",1.,1.01*g/mole);
   G4Element* elC = new G4Element("Carbon","C",6.,12.01*g/mole);
@@ -78,6 +81,7 @@ void DetectorConstruction::DefineMaterials() {
   Kapton->AddElement(elC, 0.7213);
   Kapton->AddElement(elN, 0.0765);
   Kapton->AddElement(elO, 0.1749);
+  */
 
   // Print materials
   G4cout << *(G4Material::GetMaterialTable()) << G4endl;
@@ -90,10 +94,9 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   G4Material* defaultMaterial = G4Material::GetMaterial("G4_AIR");
   G4Material* gadoliniumMaterial = G4Material::GetMaterial("G4_Gd");
   G4Material* waterMaterial = G4Material::GetMaterial("G4_WATER");
-  G4Material* KaptonMaterial = G4Material::GetMaterial("Kapton");
 
   // Throw exception to ensure material usability
-  if ( ! defaultMaterial || ! gadoliniumMaterial || ! waterMaterial || ! KaptonMaterial ) {
+  if ( ! defaultMaterial || ! gadoliniumMaterial || ! waterMaterial ) {
     G4ExceptionDescription msg;
     msg << "Cannot retrieve materials already defined."; 
     G4Exception("DetectorConstruction::DefineVolumes()",
@@ -103,33 +106,34 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   // Measurement Declarations
   G4double modelRadius = 10*mm, modelHeight,
            world_innerRadius, world_outerRadius, world_height, world_startAngle, world_spanningAngle,
-           H2O_cyl_innerRadius, H2O_cyl_outerRadius, H2O_cyl_height, H2O_cyl_startAngle, H2O_cyl_spanningAngle,
-           GdA_cyl_innerRadius, GdA_cyl_outerRadius, GdA_cyl_height, GdA_cyl_startAngle, GdA_cyl_spanningAngle,
-           GdC_cyl_innerRadius, GdC_cyl_outerRadius, GdC_cyl_height, GdC_cyl_startAngle, GdC_cyl_spanningAngle;
+           scatteringMedium_innerRadius, scatteringMedium_outerRadius, scatteringMedium_height,
+                            scatteringMedium_startAngle, scatteringMedium_spanningAngle,
+           shield_innerRadius, shield_outerRadius, shield_height, shield_startAngle, shield_spanningAngle,
+           collimator_innerRadius, collimator_outerRadius, collimator_height, collimator_startAngle, collimator_spanningAngle;
 
-  // Water scattering medium (cylinder)
-  H2O_cyl_innerRadius = 0*mm;
-  H2O_cyl_outerRadius = modelRadius;
-  H2O_cyl_height = 30*mm;
-  H2O_cyl_startAngle = 0*deg;
-  H2O_cyl_spanningAngle = 360*deg;
+  // Shield (Gd half-cylinder)
+  shield_innerRadius = 0*mm;
+  shield_outerRadius = modelRadius;
+  shield_height = 1*mm;
+  shield_startAngle = 180*deg;
+  shield_spanningAngle = 180*deg;
 
-  // Gadolinium Absorber (half-cylinder plate)
-  GdA_cyl_innerRadius = 0*mm;
-  GdA_cyl_outerRadius = modelRadius;
-  GdA_cyl_height = 1*mm;
-  GdA_cyl_startAngle = 180*deg;
-  GdA_cyl_spanningAngle = 180*deg;
+  // Scattering medium (water cylinder)
+  scatteringMedium_innerRadius = 0*mm;
+  scatteringMedium_outerRadius = modelRadius;
+  scatteringMedium_height = 30*mm;
+  scatteringMedium_startAngle = 0*deg;
+  scatteringMedium_spanningAngle = 360*deg;
 
-  // Gadolinium collimator (cylinder-bored cylinder)
-  GdC_cyl_innerRadius = 0.5*mm;
-  GdC_cyl_outerRadius = modelRadius;
-  GdC_cyl_height = 2*GdC_cyl_innerRadius*fLDratio;
-  GdC_cyl_startAngle = 0*deg;
-  GdC_cyl_spanningAngle = 360*deg;
+  // Collimator (Gd cylinder with concentric bore)
+  collimator_innerRadius = 0.5*mm;
+  collimator_outerRadius = modelRadius;
+  collimator_height = 2*collimator_innerRadius*fLDratio;
+  collimator_startAngle = 0*deg;
+  collimator_spanningAngle = 360*deg;
 
   // Total model height
-  modelHeight = GdC_cyl_height + H2O_cyl_height + GdC_cyl_height;
+  modelHeight = shield_height + scatteringMedium_height + collimator_height;
 
   // World (cylinder)
   world_innerRadius = 0*mm;
@@ -143,13 +147,13 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   messenger->SaveModelHeight(world_height);
 
   // Solid coordinates (linear)
-  G4double GdA_cyl_posZ = (GdA_cyl_height-modelHeight)/2,
-           H2O_cyl_posZ = GdA_cyl_posZ + (GdA_cyl_height/2 + H2O_cyl_height/2),
-           GdC_cyl_posZ = H2O_cyl_posZ + (H2O_cyl_height/2 + GdC_cyl_height/2);
+  G4double shield_posZ = (shield_height-modelHeight)/2,
+           scatteringMedium_posZ = shield_posZ + (shield_height/2 + scatteringMedium_height/2),
+           collimator_posZ = scatteringMedium_posZ + (scatteringMedium_height/2 + collimator_height/2);
 
-  // World Volume
+  // Placement of world LV containing world solid
   G4VSolid* worldS 
-    = new G4Tubs("World",
+    = new G4Tubs("World",          // solid dimensions
                  world_innerRadius,
                  world_outerRadius,
                  world_height/2,   // cyl_halfZ
@@ -163,7 +167,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   G4VPhysicalVolume* worldPV
     = new G4PVPlacement(
                  0,                // no rotation
-                 G4ThreeVector(),
+                 G4ThreeVector(),  // origin of mother volume
                  worldLV,          // its logical volume                         
                  "World",          // its name
                  0,                // its mother  volume
@@ -171,85 +175,85 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
                  0,                // copy number
                  fCheckOverlaps);  // checking overlaps 
 
-  // Gadolinium absorber
-  G4VSolid* GdA_cylS 
-    = new G4Tubs("GdA_cyl",            // its name
-                  GdA_cyl_innerRadius,
-                  GdA_cyl_outerRadius,
-                  GdA_cyl_height/2,
-                  GdA_cyl_startAngle,
-                  GdA_cyl_spanningAngle);
-  G4LogicalVolume* GdA_cylLV
+  // Placement of shield LV containing shield solid
+  G4VSolid* shieldS 
+    = new G4Tubs("shieldS",
+                  shield_innerRadius,
+                  shield_outerRadius,
+                  shield_height/2,
+                  shield_startAngle,
+                  shield_spanningAngle);
+  G4LogicalVolume* shieldLV
     = new G4LogicalVolume(
-                  GdA_cylS,             // its solid
-                  gadoliniumMaterial,   // its material
-                  "GdA_cyl");           // its name
+                  shieldS,
+                  gadoliniumMaterial,
+                  "shieldLV");
   fDetector
     = new G4PVPlacement(
-                  0,                   // no rotation
-                  G4ThreeVector(0, 0, GdA_cyl_posZ),
-                  GdA_cylLV,           // its logical volume                         
-                  "GdA_cyl",           // its name
-                  worldLV,             // its mother volume
-                  false,               // no boolean operation
-                  0,                   // copy number
-                  fCheckOverlaps);     // checking overlaps
+                  0,
+                  G4ThreeVector(0, 0, shield_posZ),
+                  shieldLV,
+                  "shield",
+                  worldLV,
+                  false,
+                  0,
+                  fCheckOverlaps);
 
-  // Water scattering medium
-  G4VSolid* H2O_cylS 
-    = new G4Tubs("H2O_cyl",            // its name
-                  H2O_cyl_innerRadius,
-                  H2O_cyl_outerRadius,
-                  H2O_cyl_height/2,
-                  H2O_cyl_startAngle,
-                  H2O_cyl_spanningAngle);
-  G4LogicalVolume* H2O_cylLV
+  // Placement of scattering medium LV containing scattering medium solid
+  G4VSolid* scatteringMediumS 
+    = new G4Tubs("scatteringMediumS",
+                  scatteringMedium_innerRadius,
+                  scatteringMedium_outerRadius,
+                  scatteringMedium_height/2,
+                  scatteringMedium_startAngle,
+                  scatteringMedium_spanningAngle);
+  G4LogicalVolume* scatteringMediumLV
     = new G4LogicalVolume(
-                  H2O_cylS,             // its solid
-                  waterMaterial,        // its material
-                  "H2O_cyl");           // its name
+                  scatteringMediumS,
+                  waterMaterial,
+                  "scatteringMediumLV");
   fDetector
     = new G4PVPlacement(
-                  0,                   // no rotation
-                  G4ThreeVector(0, 0, H2O_cyl_posZ),
-                  H2O_cylLV,           // its logical volume                         
-                  "H2O_cyl",           // its name
-                  worldLV,             // its mother volume
-                  false,               // no boolean operation
-                  0,                   // copy number
-                  fCheckOverlaps);     // checking overlaps
+                  0,
+                  G4ThreeVector(0, 0, scatteringMedium_posZ),
+                  scatteringMediumLV,
+                  "scatteringMedium",
+                  worldLV,
+                  false,
+                  0,
+                  fCheckOverlaps);
 
-  // Gadolinium collimator
-  G4VSolid* GdC_cylS
-    = new G4Tubs("GdC_cyl",            // its name
-                 GdC_cyl_innerRadius,
-                 GdC_cyl_outerRadius,
-                 GdC_cyl_height/2,
-                 GdC_cyl_startAngle,
-                 GdC_cyl_spanningAngle);
-  G4LogicalVolume* GdC_cylLV
+  // Placement of collimator LV containing collimator solid
+  G4VSolid* collimatorS
+    = new G4Tubs("collimatorS",
+                 collimator_innerRadius,
+                 collimator_outerRadius,
+                 collimator_height/2,
+                 collimator_startAngle,
+                 collimator_spanningAngle);
+  G4LogicalVolume* collimatorLV
     = new G4LogicalVolume(
-                 GdC_cylS,             // its solid
-                 gadoliniumMaterial,   // its material
-                 "GdC_cyl");           // its name
+                 collimatorS,
+                 gadoliniumMaterial,
+                 "collimatorLV");
   fDetector
     = new G4PVPlacement(
-                 0,                   // no rotation
-                 G4ThreeVector(0, 0, GdC_cyl_posZ),
-                 GdC_cylLV,           // its logical volume                         
-                 "GdC_cyl",           // its name
-                 worldLV,             // its mother volume
-                 false,               // no boolean operation
-                 0,                   // copy number
-                 fCheckOverlaps);     // checking overlaps
+                 0,
+                 G4ThreeVector(0, 0, collimator_posZ),
+                 collimatorLV,
+                 "collimator",
+                 worldLV,
+                 false,
+                 0,
+                 fCheckOverlaps);
 
   // Visualization attributes
   worldLV->SetVisAttributes (G4VisAttributes::Invisible);
   G4VisAttributes* simpleBoxVisAtt = new G4VisAttributes(G4Colour(0, 0, 1.0)); //blue
-  simpleBoxVisAtt->SetVisibility(true); H2O_cylLV->SetVisAttributes(simpleBoxVisAtt);
+  simpleBoxVisAtt->SetVisibility(true); scatteringMediumLV->SetVisAttributes(simpleBoxVisAtt);
   simpleBoxVisAtt = new G4VisAttributes(G4Colour(0.25, 0.25, 0.25)); // dark gray
-  simpleBoxVisAtt->SetVisibility(true); GdA_cylLV->SetVisAttributes(simpleBoxVisAtt);
-                                        GdC_cylLV->SetVisAttributes(simpleBoxVisAtt);
+  simpleBoxVisAtt->SetVisibility(true); shieldLV->SetVisAttributes(simpleBoxVisAtt);
+                                        collimatorLV->SetVisAttributes(simpleBoxVisAtt);
 
   // Always return the physical World
   return worldPV;
