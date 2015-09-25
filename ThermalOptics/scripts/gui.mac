@@ -17,14 +17,14 @@
 /gui/addButton gun "0.1 eV"  "/gun/energy 0.1 eV"
 /gui/addButton gun "1 eV"  "/gun/energy 1 eV"
 #
-# Model menu :
-/gui/addMenu model Model
-/gui/addButton model "1" "/model/setLD 1"
-/gui/addButton model "25" "/model/setLD 25"
-/gui/addButton model "50" "/model/setLD 50"
-/gui/addButton model "75" "/model/setLD 75"
-/gui/addButton model "100" "/model/setLD 100"
-/gui/addButton model "200" "/model/setLD 200"
+# LD menu :
+/gui/addMenu ld LD
+/gui/addButton ld "1" "/model/setLD 1"
+/gui/addButton ld "25" "/model/setLD 25"
+/gui/addButton ld "50" "/model/setLD 50"
+/gui/addButton ld "75" "/model/setLD 75"
+/gui/addButton ld "100" "/model/setLD 100"
+/gui/addButton ld "200" "/model/setLD 200"
 #
 # Viewer menu :
 /gui/addMenu viewer Viewer

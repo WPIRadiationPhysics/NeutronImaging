@@ -56,7 +56,6 @@ void DetectorConstruction::DefineMaterials() {
 	
   // Materials defined using NIST Manager
   G4NistManager* nistManager = G4NistManager::Instance();
-  nistManager->FindOrBuildMaterial("G4_Gd");
   nistManager->FindOrBuildMaterial("G4_WATER");
   nistManager->FindOrBuildMaterial("G4_AIR");
   
@@ -67,21 +66,31 @@ void DetectorConstruction::DefineMaterials() {
   new G4Material("Vacuum", 1., 1.01*g/mole, density,
                    kStateGas,temperature,pressure);
 
-  // Manually synthesize material
-  /*
+  // Manually synthesize Boron-concentration dependent borosilicate Pyrex
+  // Todo: label arguments from G4Material.hh
+  G4double BPyrex_density = 2.23*g/cm3; // via WolframAlpha
+  
+  G4double total_yield = 99.9, // Good old Wikipedia
+           B_yield = 4.0/total_yield, // Percentage by weight
+           O_yield = 54.0/(total_yield - (4 - B_yield)),
+           Na_yield = 2.8/(total_yield - (4 - B_yield)),
+           Al_yield = 1.1/(total_yield - (4 - B_yield)),
+           Si_yield = 37.7/(total_yield - (4 - B_yield)),
+           K_yield = 0.3/(total_yield - (4 - B_yield));
 
-  Todo: label arguments from G4Material.hh
-
-  G4Material* Kapton = new G4Material("Kapton",1.42*g/cm3, 4);
-  G4Element* elH = new G4Element("Hydrogen","H2",1.,1.01*g/mole);
-  G4Element* elC = new G4Element("Carbon","C",6.,12.01*g/mole);
-  G4Element* elN = new G4Element("Nitrogen","N2",7.,14.01*g/mole);
-  G4Element* elO = new G4Element("Oxygen","O2",8.,16.*g/mole);
-  Kapton->AddElement(elH, 0.0273);
-  Kapton->AddElement(elC, 0.7213);
-  Kapton->AddElement(elN, 0.0765);
-  Kapton->AddElement(elO, 0.1749);
-  */
+  G4Material* BPyrex = new G4Material("BPyrex", BPyrex_density, 6);
+  G4Element* elB = new G4Element("Boron", "B", 5, 10.81*g/mole);
+  G4Element* elO = new G4Element("Oxygen", "O", 8, 15.999*g/mole);
+  G4Element* elNa = new G4Element("Sodium", "Na", 11, 22.98976928*g/mole);
+  G4Element* elAl = new G4Element("Aluminum", "Al", 13, 26.9815385*g/mole);
+  G4Element* elSi = new G4Element("Silicon", "Si", 14, 28.085*g/mole);
+  G4Element* elK = new G4Element("Potassium", "K", 19, 39.0983*g/mole);
+  BPyrex->AddElement(elB, B_yield);
+  BPyrex->AddElement(elO, O_yield);
+  BPyrex->AddElement(elNa, Na_yield);
+  BPyrex->AddElement(elAl, Al_yield);
+  BPyrex->AddElement(elSi, Si_yield);
+  BPyrex->AddElement(elK, K_yield);
 
   // Print materials
   G4cout << *(G4Material::GetMaterialTable()) << G4endl;
@@ -91,12 +100,12 @@ void DetectorConstruction::DefineMaterials() {
 G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
 
   // Get materials
-  G4Material* defaultMaterial = G4Material::GetMaterial("G4_AIR");
-  G4Material* gadoliniumMaterial = G4Material::GetMaterial("G4_Gd");
+  G4Material* defaultMaterial = G4Material::GetMaterial("G4_AIR"); // or Vacuum
+  G4Material* pyrexMaterial = G4Material::GetMaterial("BPyrex");
   G4Material* waterMaterial = G4Material::GetMaterial("G4_WATER");
 
   // Throw exception to ensure material usability
-  if ( ! defaultMaterial || ! gadoliniumMaterial || ! waterMaterial ) {
+  if ( ! defaultMaterial || ! waterMaterial || ! pyrexMaterial ) {
     G4ExceptionDescription msg;
     msg << "Cannot retrieve materials already defined."; 
     G4Exception("DetectorConstruction::DefineVolumes()",
@@ -186,7 +195,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   G4LogicalVolume* shieldLV
     = new G4LogicalVolume(
                   shieldS,
-                  gadoliniumMaterial,
+                  pyrexMaterial,
                   "shieldLV");
   fDetector
     = new G4PVPlacement(
@@ -234,7 +243,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   G4LogicalVolume* collimatorLV
     = new G4LogicalVolume(
                  collimatorS,
-                 gadoliniumMaterial,
+                 pyrexMaterial,
                  "collimatorLV");
   fDetector
     = new G4PVPlacement(
@@ -251,7 +260,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   worldLV->SetVisAttributes (G4VisAttributes::Invisible);
   G4VisAttributes* simpleBoxVisAtt = new G4VisAttributes(G4Colour(0, 0, 1.0)); //blue
   simpleBoxVisAtt->SetVisibility(true); scatteringMediumLV->SetVisAttributes(simpleBoxVisAtt);
-  simpleBoxVisAtt = new G4VisAttributes(G4Colour(0.25, 0.25, 0.25)); // dark gray
+  simpleBoxVisAtt = new G4VisAttributes(G4Colour(0.75, 0.75, 0.75)); // light gray
   simpleBoxVisAtt->SetVisibility(true); shieldLV->SetVisAttributes(simpleBoxVisAtt);
                                         collimatorLV->SetVisAttributes(simpleBoxVisAtt);
 
