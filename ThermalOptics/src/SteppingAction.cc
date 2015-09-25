@@ -31,11 +31,15 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     Messenger* messenger = Messenger::GetMessenger();
     G4double worldZLength = messenger->GetModelHeight();
 
-    // Acquire Analysis Manager
+    // Acquire Analysis Manager and tally dimension
     G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+    G4double tallyDim = messenger->GetTallyDim();
 
-    // If neutron makes it through collimator, append xy coordinates to 2Dhistogram
-    if ( stepParticle == "neutron" ) { if ( stepZ >= worldZLength/2 ) {
+    // If neutron makes it through collimator and lands within tally mesh dimensions,
+    if ( stepParticle == "neutron" &&  stepZ >= worldZLength/2 ) {
+    if ( abs(stepX) <= tallyDim && abs(stepY) <= tallyDim ) {
+
+      // Append xy coordinates to 2Dhistogram
       G4int histoID = analysisManager->GetH2Id("nFlux");
       analysisManager->FillH2(histoID, stepX, stepY);
     }}

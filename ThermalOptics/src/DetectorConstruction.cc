@@ -58,6 +58,7 @@ void DetectorConstruction::DefineMaterials() {
   G4NistManager* nistManager = G4NistManager::Instance();
   nistManager->FindOrBuildMaterial("G4_WATER");
   nistManager->FindOrBuildMaterial("G4_AIR");
+  nistManager->FindOrBuildMaterial("G4_Gd");
   
   // Geant4 conventional definition of a vacuum
   G4double density     = universe_mean_density;  //from PhysicalConstants.h
@@ -101,7 +102,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
 
   // Get materials
   G4Material* defaultMaterial = G4Material::GetMaterial("G4_AIR"); // or Vacuum
-  G4Material* pyrexMaterial = G4Material::GetMaterial("BPyrex");
+  G4Material* pyrexMaterial = G4Material::GetMaterial("G4_Gd");
   G4Material* waterMaterial = G4Material::GetMaterial("G4_WATER");
 
   // Throw exception to ensure material usability

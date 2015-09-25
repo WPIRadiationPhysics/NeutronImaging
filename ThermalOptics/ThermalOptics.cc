@@ -1,5 +1,6 @@
 #include "DetectorConstruction.hh"
 #include "ActionInitialization.hh"
+#include "Messenger.hh"
 
 #ifdef G4MULTITHREADED
 #include "G4MTRunManager.hh"
@@ -9,6 +10,7 @@
 
 #include "G4UImanager.hh"
 #include "G4UIcommand.hh"
+#include "G4SystemOfUnits.hh"
 #include "FTFP_BERT_HP.hh"
 #include "Randomize.hh"
 
@@ -84,43 +86,49 @@ int main(int argc,char** argv) {
   visManager->Initialize();
 #endif
 
-  // Get the pointer to the User Interface manager
+  // Get the pointer to the User Interface manager and Messenger
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
+  Messenger* messenger = Messenger::GetMessenger();
 
-  // Proton beam
+  // Constant vars, declarations
+  G4int LDs[6] = {1, 25, 50, 75, 100, 200};
+  messenger->SaveTallyDim(0.25*cm);
+  G4String syscmd, dataDir = "data/", localDataDir;
+  std::ostringstream syscmdStream;
+
+  // Thermal Neutron beam, track tracking cuts
   UImanager->ApplyCommand("/gun/particle neutron");
+  UImanager->ApplyCommand("/gun/energy 0.025 eV");
+  UImanager->ApplyCommand("/run/setCut 0.01 mm");
 
+  // Initialize main data directory
+  syscmdStream.str(""); syscmdStream << "mkdir -p " << dataDir;
+  syscmd = syscmdStream.str(); system(syscmd);
+  
   // Begin simulation
   if ( nEvents > 0 ) {
 
-    // 5 micrometer particle track cuts
-    UImanager->ApplyCommand("/run/setCut 0.05 mm");
-	
-    // Constant vars, declarations
-    G4double energy_thermal = 0.025; // eV
-    std::ostringstream data_dirStream, syscmdStream, filmDirStream;
-    G4String data_dir, dirCommand, syscmd, filmDir;
-
-    // Initialize main data directory
-    system("mkdir -p data");
-
     // Model loop
-    for ( G4int model_i = 0; model_i < 1; model_i++ ) {
+    for ( G4int LD_i = 0; LD_i < 6; LD_i++ ) {
 
-      for ( G4int GdC_i = 0; GdC_i < 1; GdC_i++ ) {
+      // Reconfigure scatter rejection geometry
+      detConstruction->ModelLDConfiguration(LDs[LD_i]);
 
-        // Run experimental beam energies
-        syscmdStream.str(""); syscmdStream << "/gun/energy " << energy_thermal << " eV";
-        syscmd = syscmdStream.str(); UImanager->ApplyCommand(syscmd);
-        syscmdStream.str(""); syscmdStream << "/run/beamOn " << nEvents;
-        syscmd = syscmdStream.str(); UImanager->ApplyCommand(syscmd);
-      }
+      // Create LD data directory
+      syscmdStream.str(""); syscmdStream << dataDir << LDs[LD_i] << "/";
+      localDataDir = syscmdStream.str();
+      syscmdStream.str(""); syscmdStream << "mkdir -p " << localDataDir;
+      syscmd = syscmdStream.str(); system(syscmd);
+
+      // Save data directory via Messenger for RunAction
+      messenger->SaveDataDir(localDataDir); 
+
+      // Run beam
+      syscmdStream.str(""); syscmdStream << "/run/beamOn " << nEvents;
+      syscmd = syscmdStream.str(); UImanager->ApplyCommand(syscmd);
     }
 
   } else {
-
-    // mm track cuts
-    UImanager->ApplyCommand("/run/setCut 0.001 mm");
 
     // Initialize visualizer and gui macros
 #ifdef G4UI_USE
