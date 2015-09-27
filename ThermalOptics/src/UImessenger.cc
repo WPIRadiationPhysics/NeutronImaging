@@ -26,6 +26,6 @@ UImessenger::~UImessenger() {
 void UImessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
 
   if( command == fLDCmd ) {
-    fDetectorConstruction->ModelLDConfiguration(std::atoi(newValue));
+    fDetectorConstruction->ModelLDConfiguration(std::atof(newValue));
   }
 }

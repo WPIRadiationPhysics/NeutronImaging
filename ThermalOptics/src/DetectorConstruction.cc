@@ -45,7 +45,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
   return DefineVolumes();
 }
 
-void DetectorConstruction::ModelLDConfiguration(G4int LD_i) {
+void DetectorConstruction::ModelLDConfiguration(G4double LD_i) {
 
   // Append Parameters and Reconstruct geometry
   dLDratio = LD_i;
@@ -57,7 +57,7 @@ void DetectorConstruction::DefineMaterials() {
   // Materials defined using NIST Manager
   G4NistManager* nistManager = G4NistManager::Instance();
   nistManager->FindOrBuildMaterial("G4_WATER");
-  nistManager->FindOrBuildMaterial("G4_AIR");
+  //nistManager->FindOrBuildMaterial("G4_AIR");
   nistManager->FindOrBuildMaterial("G4_Gd");
   
   // Geant4 conventional definition of a vacuum
@@ -71,13 +71,13 @@ void DetectorConstruction::DefineMaterials() {
   // Todo: label arguments from G4Material.hh
   G4double BPyrex_density = 2.23*g/cm3; // via WolframAlpha
   
-  G4double total_yield = 99.9, // Good old Wikipedia
-           B_yield = 4.0/total_yield, // Percentage by weight
-           O_yield = 54.0/(total_yield - (4 - B_yield)),
-           Na_yield = 2.8/(total_yield - (4 - B_yield)),
-           Al_yield = 1.1/(total_yield - (4 - B_yield)),
-           Si_yield = 37.7/(total_yield - (4 - B_yield)),
-           K_yield = 0.3/(total_yield - (4 - B_yield));
+  G4double total_yield = 0.999, // Good old Wikipedia
+           B_yield = 0.04/(total_yield), // Percentage by weight
+           O_yield = 0.54/(total_yield),
+           Na_yield = 0.028/(total_yield),
+           Al_yield = 0.011/(total_yield),
+           Si_yield = 0.377/(total_yield),
+           K_yield = 0.003/(total_yield);
 
   G4Material* BPyrex = new G4Material("BPyrex", BPyrex_density, 6);
   G4Element* elB = new G4Element("Boron", "B", 5, 10.81*g/mole);
@@ -101,7 +101,7 @@ void DetectorConstruction::DefineMaterials() {
 G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
 
   // Get materials
-  G4Material* defaultMaterial = G4Material::GetMaterial("G4_AIR"); // or Vacuum
+  G4Material* defaultMaterial = G4Material::GetMaterial("Vacuum"); // or G4_AIR
   G4Material* pyrexMaterial = G4Material::GetMaterial("G4_Gd");
   G4Material* waterMaterial = G4Material::GetMaterial("G4_WATER");
 
@@ -118,15 +118,15 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
            world_innerRadius, world_outerRadius, world_height, world_startAngle, world_spanningAngle,
            scatteringMedium_innerRadius, scatteringMedium_outerRadius, scatteringMedium_height,
                             scatteringMedium_startAngle, scatteringMedium_spanningAngle,
-           shield_innerRadius, shield_outerRadius, shield_height, shield_startAngle, shield_spanningAngle,
+           foil_innerRadius, foil_outerRadius, foil_height, foil_startAngle, foil_spanningAngle,
            collimator_innerRadius, collimator_outerRadius, collimator_height, collimator_startAngle, collimator_spanningAngle;
 
-  // Shield (Gd half-cylinder)
-  shield_innerRadius = 0*mm;
-  shield_outerRadius = modelRadius;
-  shield_height = 1*mm;
-  shield_startAngle = 180*deg;
-  shield_spanningAngle = 180*deg;
+  // Foil (Gd half-cylinder)
+  foil_innerRadius = 0*mm;
+  foil_outerRadius = modelRadius;
+  foil_height = 1*mm;
+  foil_startAngle = 180*deg;
+  foil_spanningAngle = 180*deg;
 
   // Scattering medium (water cylinder)
   scatteringMedium_innerRadius = 0*mm;
@@ -143,7 +143,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   collimator_spanningAngle = 360*deg;
 
   // Total model height
-  modelHeight = shield_height + scatteringMedium_height + collimator_height;
+  modelHeight = foil_height + scatteringMedium_height + collimator_height;
 
   // World (cylinder)
   world_innerRadius = 0*mm;
@@ -157,9 +157,9 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   messenger->SaveModelHeight(world_height);
 
   // Solid coordinates (linear)
-  G4double shield_posZ = (shield_height-modelHeight)/2,
-           scatteringMedium_posZ = shield_posZ + (shield_height/2 + scatteringMedium_height/2),
-           collimator_posZ = scatteringMedium_posZ + (scatteringMedium_height/2 + collimator_height/2);
+  G4double foil_posZ = (foil_height/2)-(modelHeight/2);
+  G4double scatteringMedium_posZ = foil_posZ + (foil_height/2 + scatteringMedium_height/2);
+  G4double collimator_posZ = scatteringMedium_posZ + (scatteringMedium_height/2 + collimator_height/2);
 
   // Placement of world LV containing world solid
   G4VSolid* worldS 
@@ -185,25 +185,25 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
                  0,                // copy number
                  fCheckOverlaps);  // checking overlaps 
 
-  // Placement of shield LV containing shield solid
-  G4VSolid* shieldS 
-    = new G4Tubs("shieldS",
-                  shield_innerRadius,
-                  shield_outerRadius,
-                  shield_height/2,
-                  shield_startAngle,
-                  shield_spanningAngle);
-  G4LogicalVolume* shieldLV
+  // Placement of foil LV containing foil solid
+  G4VSolid* foilS 
+    = new G4Tubs("foilS",
+                  foil_innerRadius,
+                  foil_outerRadius,
+                  foil_height/2,
+                  foil_startAngle,
+                  foil_spanningAngle);
+  G4LogicalVolume* foilLV
     = new G4LogicalVolume(
-                  shieldS,
+                  foilS,
                   pyrexMaterial,
-                  "shieldLV");
+                  "foilLV");
   fDetector
     = new G4PVPlacement(
                   0,
-                  G4ThreeVector(0, 0, shield_posZ),
-                  shieldLV,
-                  "shield",
+                  G4ThreeVector(0, 0, foil_posZ),
+                  foilLV,
+                  "foil",
                   worldLV,
                   false,
                   0,
@@ -262,7 +262,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   G4VisAttributes* simpleBoxVisAtt = new G4VisAttributes(G4Colour(0, 0, 1.0)); //blue
   simpleBoxVisAtt->SetVisibility(true); scatteringMediumLV->SetVisAttributes(simpleBoxVisAtt);
   simpleBoxVisAtt = new G4VisAttributes(G4Colour(0.75, 0.75, 0.75)); // light gray
-  simpleBoxVisAtt->SetVisibility(true); shieldLV->SetVisAttributes(simpleBoxVisAtt);
+  simpleBoxVisAtt->SetVisibility(true); foilLV->SetVisAttributes(simpleBoxVisAtt);
                                         collimatorLV->SetVisAttributes(simpleBoxVisAtt);
 
   // Always return the physical World

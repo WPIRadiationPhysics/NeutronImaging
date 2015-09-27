@@ -3,7 +3,7 @@
 
 # Number of cores
 nThreads=2
-nEvents=10000
+nEvents=1000
 
 # Test for Geant4 libraries
 if [ "$G4COMP" == "" ]; then
@@ -18,5 +18,5 @@ mkdir build
 cd build
 cmake ..
 make "-j""$nThreads"
-time ./ThermalOptics -t "$nThreads" -n "$nEvents"
+time ./ThermalOptics -t "$nThreads" -n "$nEvents" > run.out
 root -q plot.C

@@ -10,7 +10,6 @@ RunAction::RunAction() : G4UserRunAction() {
 
   // Acquire analysis manager and Messenger
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-  Messenger* messenger = Messenger::GetMessenger();
 
   // Obtain tally dimension
   G4double meshDim = 1*mm;

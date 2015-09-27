@@ -20,7 +20,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
     virtual G4VPhysicalVolume* Construct();
 
     // Collimator LD setting
-    virtual void ModelLDConfiguration(G4int LD_i);
+    virtual void ModelLDConfiguration(G4double LD_i);
     
   private:
     // methods

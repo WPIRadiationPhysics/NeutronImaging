@@ -9,7 +9,7 @@ class G4UIdirectory;
 class G4UIcmdWithAnInteger;
 class G4UIcmdWithADouble;
 
-class UImessenger: public G4UImessenger {
+class UImessenger : public G4UImessenger {
 
   public:
     UImessenger(DetectorConstruction* );
