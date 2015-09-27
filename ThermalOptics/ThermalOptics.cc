@@ -25,7 +25,7 @@
 namespace {
   void PrintUsage() {
     G4cerr << " Usage: " << G4endl;
-    G4cerr << " ./nScatterReduction [-n nEvents ] [-u UIsession] [-t nThreads]" << G4endl;
+    G4cerr << " ./nThermalOptics [-n nEvents ] [-u UIsession] [-t nThreads]" << G4endl;
     G4cerr << "   Note: -t option is available only for multi-threaded mode."
            << G4endl;
   }
@@ -91,9 +91,8 @@ int main(int argc,char** argv) {
   Messenger* messenger = Messenger::GetMessenger();
 
   // Constant vars, declarations
-  G4int LDs[6] = {1, 25, 50, 75, 100, 200};
-  messenger->SaveTallyDim(0.25*cm);
-  G4String syscmd, dataDir = "data/", localDataDir;
+  G4double LDs[6] = {1, 25, 50, 75, 100, 200};
+  G4String syscmd, dataDir = "data/";
   std::ostringstream syscmdStream;
 
   // Thermal Neutron beam, track tracking cuts
@@ -104,6 +103,9 @@ int main(int argc,char** argv) {
   // Initialize main data directory
   syscmdStream.str(""); syscmdStream << "mkdir -p " << dataDir;
   syscmd = syscmdStream.str(); system(syscmd);
+
+  // Save data directory via Messenger for RunAction
+  messenger->SaveDataDir(dataDir);
   
   // Begin simulation
   if ( nEvents > 0 ) {
@@ -111,17 +113,11 @@ int main(int argc,char** argv) {
     // Model loop
     for ( G4int LD_i = 0; LD_i < 6; LD_i++ ) {
 
+      // Set model LD
+      messenger->SaveLDRatio(LDs[LD_i]);
+
       // Reconfigure scatter rejection geometry
       detConstruction->ModelLDConfiguration(LDs[LD_i]);
-
-      // Create LD data directory
-      syscmdStream.str(""); syscmdStream << dataDir << LDs[LD_i] << "/";
-      localDataDir = syscmdStream.str();
-      syscmdStream.str(""); syscmdStream << "mkdir -p " << localDataDir;
-      syscmd = syscmdStream.str(); system(syscmd);
-
-      // Save data directory via Messenger for RunAction
-      messenger->SaveDataDir(localDataDir); 
 
       // Run beam
       syscmdStream.str(""); syscmdStream << "/run/beamOn " << nEvents;

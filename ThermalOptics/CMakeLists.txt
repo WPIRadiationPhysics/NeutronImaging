@@ -52,6 +52,7 @@ set(ThermalOptics_SCRIPTS
   init.mac
   init_vis.mac
   vis.mac
+  plot.C
   )
 
 foreach(_script ${ThermalOptics_SCRIPTS})

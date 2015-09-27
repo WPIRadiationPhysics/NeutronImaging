@@ -31,7 +31,7 @@ DetectorConstruction::DetectorConstruction()
      fUImessenger = new UImessenger(this);
 
      // Initialize model parameters
-     fLDratio = 1; // Length-Diameter ratio of collimator
+     dLDratio = 1; // Length-Diameter ratio of collimator
 
      // Acquire material data
      DefineMaterials();
@@ -48,7 +48,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 void DetectorConstruction::ModelLDConfiguration(G4int LD_i) {
 
   // Append Parameters and Reconstruct geometry
-  fLDratio = LD_i;
+  dLDratio = LD_i;
   G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 
@@ -114,7 +114,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   }
 
   // Measurement Declarations
-  G4double modelRadius = 10*mm, modelHeight,
+  G4double modelHeight, modelRadius = 10*mm,
            world_innerRadius, world_outerRadius, world_height, world_startAngle, world_spanningAngle,
            scatteringMedium_innerRadius, scatteringMedium_outerRadius, scatteringMedium_height,
                             scatteringMedium_startAngle, scatteringMedium_spanningAngle,
@@ -138,7 +138,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   // Collimator (Gd cylinder with concentric bore)
   collimator_innerRadius = 0.5*mm;
   collimator_outerRadius = modelRadius;
-  collimator_height = 2*collimator_innerRadius*fLDratio;
+  collimator_height = 2*collimator_innerRadius*dLDratio;
   collimator_startAngle = 0*deg;
   collimator_spanningAngle = 360*deg;
 
@@ -152,7 +152,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   world_startAngle = 0*deg;
   world_spanningAngle = 360*deg;
 
-  // Save model height for source definition via Messenger
+  // Save model height (for source definition) and radius (for film dimension) via Messenger
   Messenger* messenger = Messenger::GetMessenger();
   messenger->SaveModelHeight(world_height);
 

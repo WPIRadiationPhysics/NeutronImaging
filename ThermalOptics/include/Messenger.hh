@@ -4,6 +4,8 @@
 #include "globals.hh"
 #include "Messenger.hh"
 
+#include "G4SystemOfUnits.hh"
+
 class Messenger {
 
   public:
@@ -17,16 +19,20 @@ class Messenger {
 
     // Public vars
     G4double fModelHeight;
+    G4double fMeshDim;
     G4String fDataDir;
     G4double nFluxTallyDim;
+    G4double fLDratio;
 
     // Public calls
-    void SaveModelHeight(G4double modelHeight) { fModelHeight = modelHeight; }
+    void SaveLDRatio(G4double ldratio) { fLDratio = ldratio; }
+    G4double GetLDRatio() { return fLDratio; }
+    void SaveModelHeight(G4double modelheight) { fModelHeight = modelheight; }
     G4double GetModelHeight() { return fModelHeight; }
+    void SaveMeshDim(G4double meshdim) { fMeshDim = meshdim; }
+    G4double GetMeshDim() { return fMeshDim; }
     void SaveDataDir(G4String datadir) { fDataDir = datadir; }
     G4String GetDataDir() { return fDataDir; }
-    void SaveTallyDim(G4double nfluxtallydim) { nFluxTallyDim = nfluxtallydim; }
-    G4double GetTallyDim() { return nFluxTallyDim; }
 
   //private:
 

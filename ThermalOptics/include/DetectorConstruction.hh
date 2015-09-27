@@ -20,7 +20,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
     virtual G4VPhysicalVolume* Construct();
 
     // Collimator LD setting
-    G4int fLDratio;
     virtual void ModelLDConfiguration(G4int LD_i);
     
   private:
@@ -33,6 +32,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 
     // UI cmd messenger
     UImessenger* fUImessenger;
+
+    // local Collimator LD var
+    G4double dLDratio;
     
     G4VPhysicalVolume* fDetector;
     G4bool  fCheckOverlaps; // option to activate checking of volumes overlaps
