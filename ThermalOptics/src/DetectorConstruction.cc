@@ -58,7 +58,6 @@ void DetectorConstruction::DefineMaterials() {
   G4NistManager* nistManager = G4NistManager::Instance();
   nistManager->FindOrBuildMaterial("G4_WATER");
   //nistManager->FindOrBuildMaterial("G4_AIR");
-  nistManager->FindOrBuildMaterial("G4_Gd");
   
   // Geant4 conventional definition of a vacuum
   G4double density     = universe_mean_density;  //from PhysicalConstants.h
@@ -68,16 +67,17 @@ void DetectorConstruction::DefineMaterials() {
                    kStateGas,temperature,pressure);
 
   // Manually synthesize Boron-concentration dependent borosilicate Pyrex
-  // Todo: label arguments from G4Material.hh
-  G4double BPyrex_density = 2.23*g/cm3; // via WolframAlpha
-  
-  G4double total_yield = 0.999, // Good old Wikipedia
-           B_yield = 0.04/(total_yield), // Percentage by weight
-           O_yield = 0.54/(total_yield),
-           Na_yield = 0.028/(total_yield),
-           Al_yield = 0.011/(total_yield),
-           Si_yield = 0.377/(total_yield),
-           K_yield = 0.003/(total_yield);
+  G4double BPyrex_density = 2.23*g/cm3, // via WolframAlpha
+           B_composition = 0.100, // Originally 0.04, will likely break if set to 0. Don't.
+           total_yield = 0.999; // Good old Wikipedia
+  G4double B_yield  = B_composition/total_yield; // Percentage by weight
+  G4double O_yield  = (0.540/total_yield)*(1 - (B_yield - 0.04/total_yield)),
+           Na_yield = (0.028/total_yield)*(1 - (B_yield - 0.04/total_yield)),
+           Al_yield = (0.011/total_yield)*(1 - (B_yield - 0.04/total_yield)),
+           Si_yield = (0.377/total_yield)*(1 - (B_yield - 0.04/total_yield)),
+           K_yield  = (0.003/total_yield)*(1 - (B_yield - 0.04/total_yield));
+  G4double calculated_yield = B_yield + O_yield + Na_yield
+                            + Al_yield + Si_yield + K_yield; // Just in case
 
   G4Material* BPyrex = new G4Material("BPyrex", BPyrex_density, 6);
   G4Element* elB = new G4Element("Boron", "B", 5, 10.81*g/mole);
@@ -86,12 +86,12 @@ void DetectorConstruction::DefineMaterials() {
   G4Element* elAl = new G4Element("Aluminum", "Al", 13, 26.9815385*g/mole);
   G4Element* elSi = new G4Element("Silicon", "Si", 14, 28.085*g/mole);
   G4Element* elK = new G4Element("Potassium", "K", 19, 39.0983*g/mole);
-  BPyrex->AddElement(elB, B_yield);
-  BPyrex->AddElement(elO, O_yield);
-  BPyrex->AddElement(elNa, Na_yield);
-  BPyrex->AddElement(elAl, Al_yield);
-  BPyrex->AddElement(elSi, Si_yield);
-  BPyrex->AddElement(elK, K_yield);
+  BPyrex->AddElement(elB, B_yield/calculated_yield);
+  BPyrex->AddElement(elO, O_yield/calculated_yield);
+  BPyrex->AddElement(elNa, Na_yield/calculated_yield);
+  BPyrex->AddElement(elAl, Al_yield/calculated_yield);
+  BPyrex->AddElement(elSi, Si_yield/calculated_yield);
+  BPyrex->AddElement(elK, K_yield/calculated_yield);
 
   // Print materials
   G4cout << *(G4Material::GetMaterialTable()) << G4endl;
@@ -102,7 +102,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
 
   // Get materials
   G4Material* defaultMaterial = G4Material::GetMaterial("Vacuum"); // or G4_AIR
-  G4Material* pyrexMaterial = G4Material::GetMaterial("G4_Gd");
+  G4Material* pyrexMaterial = G4Material::GetMaterial("BPyrex");
   G4Material* waterMaterial = G4Material::GetMaterial("G4_WATER");
 
   // Throw exception to ensure material usability
@@ -148,7 +148,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes() {
   // World (cylinder)
   world_innerRadius = 0*mm;
   world_outerRadius = modelRadius;
-  world_height = modelHeight;
+  world_height = modelHeight*2;
   world_startAngle = 0*deg;
   world_spanningAngle = 360*deg;
 

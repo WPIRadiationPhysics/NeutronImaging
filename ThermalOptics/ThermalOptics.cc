@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   G4int nThreads = 0;
 #endif
   G4double LDs[6] = {1, 25, 50, 75, 100, 200},
-           productionCut = 0.001*mm;
+           productionCut = 0.1*mm;
   G4String syscmd, dataDir = "data/";
   std::ostringstream syscmdStream;
 
