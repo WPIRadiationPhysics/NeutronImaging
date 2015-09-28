@@ -15,8 +15,10 @@ RunAction::RunAction() : G4UserRunAction() {
   G4double meshDim = 1*mm;
   G4int meshResolution = 100;
 
-  // Create neutron 2D histogram
-  analysisManager->CreateH2("nFlux", "nFlux",
+  // Create neutron 1D and 2D histograms
+  analysisManager->CreateH1("nFlux1D", "nFlux1D",
+                            meshResolution*2, -meshDim, meshDim);
+  analysisManager->CreateH2("nFlux2D", "nFlux2D",
                             meshResolution*2, -meshDim, meshDim,
                             meshResolution*2, -meshDim, meshDim);
 }

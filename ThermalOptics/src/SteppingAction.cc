@@ -37,7 +37,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 
       // Append xy coordinates in cm to 2Dhistogram
       G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-      G4int histoID = analysisManager->GetH2Id("nFlux");
+      G4int histoID = analysisManager->GetH1Id("nFlux1D");
+      analysisManager->FillH1(histoID, stepY);
+      histoID = analysisManager->GetH2Id("nFlux2D");
       analysisManager->FillH2(histoID, stepX, stepY);
     }}
   }
